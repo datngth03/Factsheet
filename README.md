@@ -31,7 +31,7 @@ Run `Factsheet.DbMigrator` to create the initial database. This should be done i
 
 This is a layered monolith application that consists of the following applications:
 
-* `Sabeco_Factsheet.DbMigrator`: A console application which applies the migrations and also seeds the initial data. It is useful on development as well as on production environment.
+* `Factsheet.DbMigrator`: A console application which applies the migrations and also seeds the initial data. It is useful on development as well as on production environment.
 
 ## Deploying the application
 
