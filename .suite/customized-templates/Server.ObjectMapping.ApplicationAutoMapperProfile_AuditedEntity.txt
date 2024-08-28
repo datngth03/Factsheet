@@ -1,0 +1,3 @@
+##25A62697860193060FA1CCEE882BC4EF##
+            CreateMap<%%entity-name%%, %%entity-name%%Dto>().Ignore(x => x.IsChanged)%%mapper-ignore-child-entities%%;
+            %%<if:ExportExcel>%%CreateMap<%%entity-name%%, %%entity-name%%ExcelDto>();%%</if:ExportExcel>%% 

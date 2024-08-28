@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Pages\AttachmentFile\AttachmentFiles.razor" />
+    <None Include="Pages\Brewery\Breweries.razor" />
+    <None Include="Pages\Brewery\BreweriesListView.razor" />
+    <None Include="Pages\Company\Companies.razor" />
+    <None Include="Pages\Company\CompaniesListView.razor" />
+    <None Include="Pages\History\Histories.razor" />
+    <None Include="Pages\Person\Persons.razor" />
+    <None Include="Pages\Person\PersonsListView.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazorise.Bootstrap5" Version="1.5.2" />
+    <PackageReference Include="Blazorise.Icons.FontAwesome" Version="1.5.2" />
+    <PackageReference Include="Blazorise.Components" Version="1.5.2" />
+    <PackageReference Include="DevExpress.Blazor" Version="24.1.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.4" />
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Autofac.WebAssembly" Version="8.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly.LeptonXTheme" Version="3.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.SettingManagement.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Identity.Pro.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Saas.Host.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Account.Pro.Admin.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.TextTemplateManagement.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.AuditLogging.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.LanguageManagement.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.OpenIddict.Pro.Blazor.WebAssembly" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Gdpr.Blazor.WebAssembly" Version="8.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sabeco_Factsheet.HttpApi.Client\Sabeco_Factsheet.HttpApi.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Pages\Company\Companies.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
+</Project>

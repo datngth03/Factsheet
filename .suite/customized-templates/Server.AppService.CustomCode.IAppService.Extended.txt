@@ -1,0 +1,15 @@
+##867EB5F08AB254B65171DA60A347AA9C##
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace %%solution-namespace%%.%%entity-namespace%%
+{
+	public partial interface I%%entity-name-plural%%AppService
+    {
+         //HQSOFT's generated code:
+        Task<List<%%entity-name%%Dto>>GetListNoPagedAsync(Get%%entity-name-plural%%Input  input);
+
+        //Write your custom code here...
+        
+    }
+}

@@ -1,0 +1,529 @@
+@page "/breweries/{Id}"
+
+@attribute [Authorize(Sabeco_FactsheetPermissions.TbBreweries.Default)]
+
+@using DevExpress.Blazor
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+
+@using Sabeco_Factsheet.TbSkus
+@using Sabeco_Factsheet.TbBreweryDeliveryVolumes
+@using Sabeco_Factsheet.TbBreweryDeliveryVolumeTemps
+@using Sabeco_Factsheet.TbBreweries
+@using Sabeco_Factsheet.TbUsers
+@using Sabeco_Factsheet.TbInfoUpdates
+@using Sabeco_Factsheet.TbBreweryTemps
+@using Sabeco_Factsheet.TbBrewerySkus
+@using Sabeco_Factsheet.TbBrewerySkuTemps
+
+@using Sabeco_Factsheet.TbCompanies
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Permissions
+@using Sabeco_Factsheet.Shared
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+
+@using Volo.Abp.AspNetCore.Components.BlockUi
+@using Volo.Abp.AspNetCore.Components.Progression
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Notifications
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+
+@inherits Sabeco_FactsheetComponentBase
+@inject NavigationManager NavigationManager
+
+@inject ITbUsersAppService TbUsersAppService
+@inject ITbInfoUpdatesAppService TbInfoUpdatesAppService
+@inject ITbBreweriesAppService TbBreweriesAppService
+@inject ITbCompaniesAppService TbCompaniesAppService
+@inject ITbBreweryDeliveryVolumesAppService TbBreweryDeliveryVolumesAppService
+@inject ITbBrewerySkusAppService TbBrewerySkusAppService
+@inject ITbBreweryTempsAppService TbBreweryTempsAppService
+@inject ITbSkusAppService TbSkusAppService
+@inject ITbBrewerySkuTempsAppService TbBrewerySkuTempsAppService
+@inject ITbBreweryDeliveryVolumeTempsAppService TbBreweryDeliveryVolumeTempsAppService
+@inject ITbBrewerySkusAppService TbBrewerySkusAppService
+
+@inject IUiMessageService _uiMessageService
+@inject IUiNotificationService _uiNotificationService
+@inject IBlockUiService _blockUiService
+@inject IUiPageProgressService _pageProgressService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+
+
+@* ************************* PAGE HEADER ************************* *@
+
+@{
+    string code = string.Empty;
+    if (EditingBrewery.BreweryCode != null)
+    {
+        code = EditingBrewery.BreweryCode.Length > 15 ? EditingBrewery.BreweryCode.Substring(0, 15) + "..." : EditingBrewery.BreweryCode;
+    }
+}
+<PageHeader Title="@(code + (isDataEntryChanged? " (*)":""))" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+    <p></p>
+</PageHeader>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+
+
+<Row>
+    <Column>
+        @* ************************* Edit Form Section ************************* *@
+        <Card>
+            <CardBody>
+                <Row>
+                    <EditForm @ref="EditFormMain"
+                              Model="@EditingBrewery"
+                              Context="EditFormContext">
+                        <DataAnnotationsValidator />
+                        <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+                            <DxFormLayoutItem Caption="@(L["Brewery"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.BreweryCode" Enabled="false"
+                                           TextExpression="@(() => EditingBrewery.BreweryCode)"
+                                           TextChanged="@((newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.BreweryCode = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingBrewery.BreweryCode)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BriefName"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.BriefName"
+                                           TextExpression="@(() => EditingBrewery.BriefName)"
+                                           TextChanged="@((string? newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.BriefName = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() =>EditingBrewery.BriefName)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["CapactityVolumne"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxSpinEdit Value="@EditingBrewery.CapacityVolume"
+                                            ValueExpression="(() => EditingBrewery.CapacityVolume)"
+                                            ValueChanged="@((Decimal newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.CapacityVolume = newValue;
+															})"
+                                            CssClass="cw-320" Mask="#,###,###,###,###,##0.00"
+                                            InputId="numericMaskID" /> 
+                                <ValidationMessage For="@(() => EditingBrewery.CapacityVolume)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BreweryName"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.BreweryName"
+                                           TextExpression="@(() => EditingBrewery.BreweryName)"
+                                           TextChanged="@((string? newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.BreweryName = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingBrewery.BreweryName)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BreweryName(EN)"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.BreweryName_EN"
+                                           TextExpression="@(() => EditingBrewery.BreweryName_EN)"
+                                           TextChanged="@((string? newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.BreweryName_EN = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingBrewery.BreweryName_EN)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BreweryAddress"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.BreweryAdress"
+                                           TextExpression="@(() => EditingBrewery.BreweryAdress)"
+                                           TextChanged="@((string? newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.BreweryAdress = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingBrewery.BreweryAdress)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Company"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxComboBox Data="@TbCompanyList" Enabled="false"
+                                            Value="EditingBrewery.CompanyId"
+                                            ValueExpression="(() => EditingBrewery.CompanyId)"
+                                            ValueChanged="@((int newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.CompanyId = newValue;
+															})"
+                                            TextFieldName="Name"
+                                            ValueFieldName="Id"
+                                            InputCssClass="focus-value"
+                                            ShowDropDownButton="false"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                            ShowValidationIcon="true">
+                                </DxComboBox>
+                                <ValidationMessage For="@(() => EditingBrewery.CompanyId)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["tbBrewery.Note"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingBrewery.Note"
+                                           TextExpression="@(() => EditingBrewery.Note)"
+                                           TextChanged="@((string? newValue) => {
+                                                            isDataEntryChanged = true;
+                                                            EditingBrewery.Note = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingBrewery.Note)" />
+                            </DxFormLayoutItem>
+
+                        </DxFormLayout>
+                    </EditForm>
+                </Row>
+            </CardBody>
+        </Card>
+
+        <Card>
+            <CardBody>
+                <EditForm @ref="EditFormMain" Model="@EditingBrewery" Context="EditFormContext">
+                    <DataAnnotationsValidator />
+                    <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+
+                        @******************************************** Delivery Volume By Year ***********************************@
+                        <DxFormLayoutGroup ColSpanMd="12" Caption="@L["DeliveryVolumeByYear"]" HeaderCssClass="my-header"
+                                           ExpandButtonDisplayMode="GroupExpandButtonDisplayMode.Start"
+                                           AnimationType="LayoutAnimationType.Slide">
+                            <HeaderContentTemplate>
+                                <Div Style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                                    <Div>@L["DeliveryVolumeByYear"]</Div>
+                                    <Div class="demo-unemployed-checkbox-container">
+                                        <Button Clicked="BreweryDeliveryVolumeGridNew_Click" Size="Blazorise.Size.Small"
+                                                Color="Color.Primary"
+                                                Visibility="@((CanCreateBreweryDeliveryVolume || CanEditBreweryDeliveryVolume)? Visibility.Visible : Visibility.Invisible)">
+                                            <Icon Name="IconName.Add" /> @L["AddNew"]
+                                        </Button>
+                                    </Div>
+                                </Div>
+                            </HeaderContentTemplate>
+
+                            <Items>
+                                @* ************************* DEVEXPRESS DATA GRID ************************* *@
+                                <DxGrid @ref="BreweryDeliveryVolumeGrid" Data="@BreweryDeliveryVolumeList"
+                                        @bind-SelectedDataItems="@selectedBreweryDeliveryVolume"
+                                        EditFormButtonsVisible="false" PopupEditFormHeaderText="@L[$"{PopupHeaderText}"]"
+                                        SelectionMode="GridSelectionMode.Multiple" AllowSelectRowByClick="true"
+                                        EditMode="GridEditMode.PopupEditForm"
+                                        EditNewRowPosition="GridEditNewRowPosition.Bottom" FocusedRowEnabled="true"
+                                        CustomizeEditModel="BreweryDeliveryVolumeGrid_OnCustomizeEditModel"
+                                        EditModelSaving="BreweryDeliveryVolumeGrid_EditModelSaving"
+                                        EditorRenderMode="GridEditorRenderMode.Integrated"
+                                        PopupEditFormCssClass="pw-800"
+                                        TextWrapEnabled="false"
+                                        PageSize="@PageSize"
+                                        PagerPosition="GridPagerPosition.Bottom" PageSizeSelectorVisible="true" PageSizeChanged="ChangePageSize"
+                                        PageSizeSelectorItems="@(new int[] { 5, 10, 20, 50 })" PageSizeSelectorAllRowsItemVisible="true"
+                                        PagerSwitchToInputBoxButtonCount="@PageSize" PagerVisibleNumericButtonCount="@PageSize"
+                                        PagerNavigationMode="PagerNavigationMode.NumericButtons">
+                                    <Columns>
+
+                                        <DxGridDataColumn FieldName="Id" Caption="#" Width="2%"
+                                                          SortOrder="GridColumnSortOrder.Ascending" DataRowEditorVisible="false">
+                                            <EditSettings>
+                                                <DxSpinEditSettings ShowSpinButtons="false" ReadOnly="true" />
+                                            </EditSettings>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBreweryDeliveryVolumeUpdateDto.Year)" Caption="@L["Year"]">
+                                            <CellDisplayTemplate>
+                                                @{
+                                                    var yearValue = context.Value;
+
+                                                    <a>@yearValue</a>
+                                                }
+                                            </CellDisplayTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBreweryDeliveryVolumeUpdateDto.DeliveryVolume)" Caption="@L["DeliveryVolume"]">
+                                            <CellEditTemplate>
+                                                <DxSpinEdit Value="@(((TbBreweryDeliveryVolumeUpdateDto)context.EditModel).DeliveryVolume)"
+                                                            ValueExpression="@(() => ((TbBreweryDeliveryVolumeUpdateDto)context.EditModel).DeliveryVolume)"
+                                                            ValueChanged="@(async (Decimal newValue) => {
+                                                                                ((TbBreweryDeliveryVolumeUpdateDto)context.EditModel).DeliveryVolume = newValue; })"
+                                                            BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"
+                                                            ShowValidationIcon="true" Mask="#,###,###,###,###,##0.00" />
+                                            </CellEditTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridCommandColumn Width="6rem" EditButtonVisible="true" SaveButtonVisible="false"
+                                                             CancelButtonVisible="false" DeleteButtonVisible="false" NewButtonVisible="false">
+                                            <CellDisplayTemplate>
+                                                <Buttons Style="font-size:15px; cursor:pointer; padding: 0 0.3rem;">
+                                                    <Icon Name="IconName.Pen"
+                                                          Clicked="@(() => BreweryDeliveryVolumeGrid.StartEditRowAsync(context.VisibleIndex))" />
+                                                </Buttons>
+                                            </CellDisplayTemplate>
+                                            <CellEditTemplate>
+                                                <Buttons Style="font-size:15px; cursor:pointer; padding: 0 0.3rem;">
+                                                    <Icon Name="IconName.Pen" Clicked="ClickDeliveryVolumeEditRow" />
+                                                </Buttons>
+                                            </CellEditTemplate>
+                                        </DxGridCommandColumn>
+                                    </Columns>
+
+                                    @*======================= SALES ROUTE MASTER GRID - POPUP EDIT FORM =========================*@
+                                    <EditFormTemplate Context="EditFormPopupContext">
+                                        @{
+                                            EditingBreweryDeliveryVolume = (TbBreweryDeliveryVolumeUpdateDto)EditFormPopupContext.EditModel;
+                                        }
+
+                                        <Row>
+                                            <Column>
+                                                <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+
+                                                    <DxFormLayoutItem Caption="@L["Year"]" ColSpanMd="12">
+                                                        <DxSpinEdit Value="@(EditingBreweryDeliveryVolume.Year)"
+                                                                    ValueExpression="@(() => EditingBreweryDeliveryVolume.Year)"
+                                                                    ValueChanged="@(async (int newValue) => {
+                                                                                                        isDataEntryChanged = true;
+                                                                                                        EditingBreweryDeliveryVolume.Year = newValue; })"
+                                                                    BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"
+                                                                    Mask="0000" MaxValue="2900"
+                                                                    ShowValidationIcon="true" />
+                                                        <ValidationMessage For="@(() => EditingBreweryDeliveryVolume.Year)" />
+                                                    </DxFormLayoutItem>
+
+                                                    <DxFormLayoutItem Caption="@L["DeliveryVolume"]" ColSpanMd="12">
+                                                        <DxSpinEdit Value="@(EditingBreweryDeliveryVolume.DeliveryVolume)" 
+                                                                    ValueExpression="@(() => EditingBreweryDeliveryVolume.DeliveryVolume)"
+                                                                    ValueChanged="@(async (Decimal newValue) => {
+                                                                                                        isDataEntryChanged = true;
+                                                                                                        EditingBreweryDeliveryVolume.DeliveryVolume = newValue; })"
+                                                                    BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"  
+                                                                    ShowValidationIcon="true" Mask="#,###,###,###,###,##0.00" />
+                                                        <ValidationMessage For="@(() => EditingBreweryDeliveryVolume.DeliveryVolume)" />
+                                                    </DxFormLayoutItem>
+
+                                                    <br />
+                                                    <DxFormLayoutItem ColSpanMd="12">
+                                                        <Div Style="text-align: right;">
+                                                            <DxButton style="background:#ffffff;color:black;border:none;"
+                                                                      Click="@(() => BreweryDeliveryVolumeGrid.CancelEditAsync())" Text="Cancel" />
+                                                            <DxButton style="background:#002d65;border:none;" SubmitFormOnClick="true" Text="OK" Click="SaveBreweryDeliveryVolumeAsync" />
+                                                        </Div>
+                                                    </DxFormLayoutItem>
+                                                </DxFormLayout>
+                                            </Column>
+                                            <br />
+                                        </Row>
+                                    </EditFormTemplate>
+                                </DxGrid>
+                            </Items>
+                        </DxFormLayoutGroup>
+
+                    </DxFormLayout>
+                </EditForm>
+
+            </CardBody>
+        </Card>
+
+        <Card>
+            <CardBody>
+                <EditForm @ref="EditFormMain" Model="@EditingBrewery" Context="EditFormContext">
+                    <DataAnnotationsValidator />
+                    <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+
+                        @******************************************** Product Manufacturing ***********************************@
+                        <DxFormLayoutGroup ColSpanMd="12" Caption="@L["ProductManufacturing"]" HeaderCssClass="my-header"
+                                           ExpandButtonDisplayMode="GroupExpandButtonDisplayMode.Start"
+                                           AnimationType="LayoutAnimationType.Slide">
+                            <HeaderContentTemplate>
+                                <Div Style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                                    <Div>@L["ProductManufacturing"]</Div>
+                                    <Div class="demo-unemployed-checkbox-container">
+                                        <Button Clicked="BrewerySKUGridNew_Click" Size="Blazorise.Size.Small"
+                                                Color="Color.Primary"
+                                                Visibility="@((CanCreateBrewerySKU || CanEditBrewerySKU)? Visibility.Visible : Visibility.Invisible)">
+                                            <Icon Name="IconName.Add" /> @L["AddNew"]
+                                        </Button>
+                                    </Div>
+                                </Div>
+                            </HeaderContentTemplate>
+                            <Items>
+
+                                @* ************************* DEVEXPRESS DATA GRID ************************* *@
+                                <DxGrid @ref="BrewerySKUGrid" Data="@BrewerySKUList"
+                                        @bind-SelectedDataItems="@selectedBrewerySKU"
+                                        EditFormButtonsVisible="false" PopupEditFormHeaderText="@L[$"{PopupHeaderText}"]"
+                                        SelectionMode="GridSelectionMode.Multiple" AllowSelectRowByClick="true"
+                                        EditMode="GridEditMode.PopupEditForm"
+                                        EditNewRowPosition="GridEditNewRowPosition.Bottom" FocusedRowEnabled="true"
+                                        CustomizeEditModel="BrewerySKUGrid_OnCustomizeEditModel"
+                                        EditModelSaving="BrewerySKUGrid_EditModelSaving"
+                                        EditorRenderMode="GridEditorRenderMode.Integrated"
+                                        PopupEditFormCssClass="pw-800"
+                                        TextWrapEnabled="false"
+                                        PageSize="@PageSize"
+                                        PagerPosition="GridPagerPosition.Bottom" PageSizeSelectorVisible="true" PageSizeChanged="ChangePageSize"
+                                        PageSizeSelectorItems="@(new int[] { 5, 10, 20, 50 })" PageSizeSelectorAllRowsItemVisible="true"
+                                        PagerSwitchToInputBoxButtonCount="@PageSize" PagerVisibleNumericButtonCount="@PageSize"
+                                        PagerNavigationMode="PagerNavigationMode.NumericButtons">
+                                    <Columns>
+
+                                        <DxGridDataColumn FieldName="Id" Caption="#" Width="2%"
+                                                          SortOrder="GridColumnSortOrder.Ascending" DataRowEditorVisible="false">
+                                            <EditSettings>
+                                                <DxSpinEditSettings ShowSpinButtons="false" ReadOnly="true" />
+                                            </EditSettings>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBrewerySkuUpdateDto.Year)" Caption="@L["Year"]">
+                                            <CellDisplayTemplate>
+                                                @{
+                                                    var yearValue = context.Value;
+
+                                                    <a>@yearValue</a>
+                                                }
+                                            </CellDisplayTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBrewerySkuUpdateDto.SKUId)" Caption="@L["SkuCode"]">
+                                            <CellDisplayTemplate>
+                                                @{
+                                                    var skuCode = TbSkuList.FirstOrDefault(x => x.Id == (int)context.Value)?.Code;
+                                                    <a>@skuCode</a>
+                                                }
+                                            </CellDisplayTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBrewerySkuUpdateDto.SKUId)" Caption="@L["SkuName"]">
+                                            <CellDisplayTemplate>
+                                                @{
+                                                    var skuName = TbSkuList.FirstOrDefault(x => x.Id == (int)context.Value)?.Name;
+                                                    <a>@skuName</a>
+                                                }
+                                            </CellDisplayTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridDataColumn FieldName="@nameof(TbBrewerySkuUpdateDto.ProductionVolume)" Caption="@L["ProductionVolume"]">
+                                            <CellEditTemplate>
+                                                <DxSpinEdit Value="@(((TbBrewerySkuUpdateDto)context.EditModel).ProductionVolume)" Mask="#,###,###,###,###,##0.00"
+                                                            ValueExpression="@(() => ((TbBrewerySkuUpdateDto)context.EditModel).ProductionVolume)"
+                                                            ValueChanged="@(async (Decimal newValue) => { ((TbBrewerySkuUpdateDto)context.EditModel).ProductionVolume = newValue;})"
+                                                            BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"
+                                                            ShowValidationIcon="true" />
+                                            </CellEditTemplate>
+                                        </DxGridDataColumn>
+
+                                        <DxGridCommandColumn Width="6rem" EditButtonVisible="true" SaveButtonVisible="false"
+                                                             CancelButtonVisible="false" DeleteButtonVisible="false" NewButtonVisible="false">
+                                            <CellDisplayTemplate>
+                                                <Buttons Style="font-size:15px; cursor:pointer; padding: 0 0.3rem;">
+                                                    <Icon Name="IconName.Pen"
+                                                          Clicked="@(() => BrewerySKUGrid.StartEditRowAsync(context.VisibleIndex))" />
+                                                </Buttons>
+                                            </CellDisplayTemplate>
+                                            <CellEditTemplate>
+                                                <Buttons Style="font-size:15px; cursor:pointer; padding: 0 0.3rem;">
+                                                    <Icon Name="IconName.Pen" Clicked="ClickSKUEditRow" />
+                                                </Buttons>
+                                            </CellEditTemplate>
+                                        </DxGridCommandColumn>
+
+                                    </Columns>
+                                    @*======================= SALES ROUTE MASTER GRID - POPUP EDIT FORM =========================*@
+                                    <EditFormTemplate Context="EditFormPopupContext">
+                                        @{
+                                            EditingBrewerySKU = (TbBrewerySkuUpdateDto)EditFormPopupContext.EditModel;
+                                        }
+                                        <Row>
+                                            <Column>
+                                                <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+                                                    <DxFormLayoutItem Caption="@L["Year"]" ColSpanMd="12">
+                                                        <DxSpinEdit Value="@(EditingBrewerySKU.Year)"
+                                                                    ValueExpression="@(() => EditingBrewerySKU.Year)"
+                                                                    ValueChanged="@(async (int newValue) => {
+                                                                                                        isDataEntryChanged = true;
+                                                                                                        EditingBrewerySKU.Year = newValue; })"
+                                                                    BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"
+                                                                    Mask="0000" MaxValue="2900"
+                                                                    ShowValidationIcon="true" />
+                                                        <ValidationMessage For="@(() => EditingBrewerySKU.Year)" />
+                                                    </DxFormLayoutItem>
+
+                                                    <DxFormLayoutItem Caption="@(L["SkuCode"])" ColSpanMd="12">
+                                                        <DxComboBox Data="@TbSkuList"
+                                                                    Value="EditingBrewerySKU.SKUId"
+                                                                    ValueExpression="(() => EditingBrewerySKU.SKUId)"
+                                                                    ValueChanged="@((int? newValue)=>OnValueChanged(newValue))"
+                                                                    TextFieldName="Code"
+                                                                    ValueFieldName="Id"
+                                                                    InputCssClass="focus-value"
+                                                                    ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                                                    ShowValidationIcon="true">
+                                                        </DxComboBox>
+                                                        <ValidationMessage For="@(() => EditingBrewerySKU.SKUId)" />
+                                                    </DxFormLayoutItem>
+
+                                                    <DxFormLayoutItem Caption="@(L["SkuName"])" ColSpanMd="12">
+                                                        <DxComboBox Data="@TbSkuList" Enabled="false"
+                                                                    @bind-Value="EditingBrewerySKU.SKUId" ShowDropDownButton="false"
+                                                                    TextFieldName="Name"
+                                                                    ValueFieldName="Id"
+                                                                    InputCssClass="focus-value"
+                                                                    ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                                                    ShowValidationIcon="true">
+                                                        </DxComboBox>
+                                                        <ValidationMessage For="@(() => EditingBrewerySKU.SKUId)" />
+                                                    </DxFormLayoutItem>
+
+                                                    <DxFormLayoutItem Caption="@L["ProductionVolume"]" ColSpanMd="12">
+                                                        <DxSpinEdit Value="@(EditingBrewerySKU.ProductionVolume)"Mask="#,###,###,###,###,##0.00"
+                                                                    ValueExpression="@(() => EditingBrewerySKU.ProductionVolume)"
+                                                                    ValueChanged="@(async (Decimal newValue) => {
+                                                                                        isDataEntryChanged = true;
+                                                                                        EditingBrewerySKU.ProductionVolume = newValue; })" 
+                                                                    BindValueMode="BindValueMode.OnLostFocus" InputCssClass="focus-value"
+                                                                    ShowValidationIcon="true"  />
+                                                        <ValidationMessage For="@(() => EditingBrewerySKU.ProductionVolume)" />
+                                                    </DxFormLayoutItem>
+                                                    <br />
+                                                    <DxFormLayoutItem ColSpanMd="12">
+                                                        <Div Style="text-align: right;">
+                                                            <DxButton style="background:#ffffff;color:black;border:none;"
+                                                                      Click="@(() => BrewerySKUGrid.CancelEditAsync())" Text="Cancel" />
+                                                            <DxButton style="background:#002d65;border:none;" SubmitFormOnClick="true" Text="OK" Click="SaveBrewerySKUAsync" />
+                                                        </Div>
+                                                    </DxFormLayoutItem>
+                                                </DxFormLayout>
+                                            </Column>
+                                            <br />
+                                        </Row>
+                                    </EditFormTemplate>
+                                </DxGrid>
+                            </Items>
+                        </DxFormLayoutGroup>
+
+                    </DxFormLayout>
+                </EditForm>
+            </CardBody>
+        </Card>
+
+    </Column>
+</Row> 

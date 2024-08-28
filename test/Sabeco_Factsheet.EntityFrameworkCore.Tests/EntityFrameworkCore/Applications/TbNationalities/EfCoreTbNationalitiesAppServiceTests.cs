@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbNationalities;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbNationalities;
+
+public class EfCoreTbNationalitiesAppServiceTests : TbNationalitiesAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

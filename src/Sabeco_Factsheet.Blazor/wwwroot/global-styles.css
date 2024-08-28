@@ -1,0 +1,19 @@
+/* Your Global Styles */
+
+:root .lpx-theme-dim, :root .lpx-theme-dark {
+    --lpx-logo: url('/images/logo/sabeco/sabeco-logo.png');
+    --lpx-logo-icon: url('/images/logo/sabeco/sabeco-logo.png');
+}
+
+:root .lpx-theme-light {
+    --lpx-logo: url('/images/logo/sabeco/sabeco-logo.png');
+    --lpx-logo-icon: url('/images/logo/sabeco/sabeco-logo.png');
+}
+
+:root .lpx-login-bg {
+    background-image: url('/images/biasg.jpg') !important;
+}
+
+.lpx-logo-container.lpx-login-brand-text {
+    font-size: 2rem;
+} 

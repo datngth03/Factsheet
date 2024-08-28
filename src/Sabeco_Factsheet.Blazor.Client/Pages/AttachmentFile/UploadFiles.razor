@@ -1,0 +1,25 @@
+﻿@inherits Sabeco_FactsheetComponentBase
+
+
+<label for="fileupload"
+       class="load-files-label" style="border-color: #21367B;color: #21367B;
+    border: solid; border-width: 1px; border-radius: 10px;
+    cursor: pointer; display: block;
+    width: 10rem; min-height: 3rem; padding: 5px;
+    text-align: center;align-content: center;">@L["AttachmentsFile"] <i class="fa fa-upload"></i></label>
+
+<InputFile id="fileupload" hidden OnChange="HandleFileSelected" />
+
+
+@code {
+    [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            await OnFileSelected.InvokeAsync(file);
+        }
+    }
+}

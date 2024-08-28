@@ -1,0 +1,17 @@
+##50B20703AA44AC3972F1D579A665D3B8##
+
+        
+        [AllowAnonymous]
+        public virtual async Task<IRemoteStreamContent> GetListAsExcelFileAsync(%%entity-name%%ExcelDownloadDto input, string fileName)
+        {
+            var downloadToken = await _downloadTokenCache.GetAsync(input.DownloadToken);
+            if (downloadToken == null || input.DownloadToken != downloadToken.Token)
+            {
+                throw new AbpAuthorizationException("Invalid download token: " + input.DownloadToken);
+            } 
+            
+            %%excel-output-items%%
+
+            return new RemoteStreamContent(memoryStream, $"{fileName}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+         

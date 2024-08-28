@@ -1,0 +1,354 @@
+﻿@page "/companies"
+
+@attribute [Authorize(Sabeco_FactsheetPermissions.TbCompanies.Default)]
+@using Sabeco_Factsheet.Blazor.Client.Pages.History
+@using Sabeco_Factsheet.TbInfoUpdates
+@using Sabeco_Factsheet.TbUsers
+@using Sabeco_Factsheet.TsClasses
+@using Sabeco_Factsheet.TbCompanies
+@using Sabeco_Factsheet.TbUserMappingCompanies
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Permissions
+@using Sabeco_Factsheet.Shared
+
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@using Volo.Abp.AspNetCore.Components.BlockUi
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Notifications
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+
+@inherits Sabeco_FactsheetComponentBase
+@inject NavigationManager NavigationManager
+
+@inject ITbInfoUpdatesAppService InfoUpdatesAppService
+@inject ITbUsersAppService TbUsersAppService
+@inject ITbCompaniesAppService TbCompaniesAppService
+@inject ITsClassesAppService TsClassesAppService
+@inject ITbUserMappingCompaniesAppService TbUserMappingCompaniesAppService
+
+
+@inject IBlockUiService _blockUiService
+@inject IUiMessageService _uiMessageService
+@inject IUiNotificationService _uiNotificationService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Menu:TbCompanies"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+
+<Row>
+    <!-- Nội dung của Column 1 -->
+    <Column ColumnSize="ColumnSize.Is12" style="@($"display:{(isColumn1Visible ? "block" : "none")};")">
+
+        @* ************************* SEARCH ************************* *@
+        <Card Style="width:100%">
+            <CardBody>
+                <div style="display: @(!showAdvancedFilters ? "none" : "block")">
+                    <Row>
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Code"]</FieldLabel>
+                                <TextEdit Text="@Filter.Code" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.Code),value))" />
+                            </Field>
+                        </Column>
+
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["BriefName"]</FieldLabel>
+                                <TextEdit Text="@Filter.BriefName" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.BriefName),value))" />
+                            </Field>
+                        </Column>
+
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Name"]</FieldLabel>
+                                <TextEdit Text="@Filter.Name" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.Name),value))" />
+                            </Field>
+                        </Column>
+
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Address"]</FieldLabel>
+                                <TextEdit Text="@Filter.ContactInfo_01" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.ContactInfo_01),value))" />
+                            </Field>
+                        </Column>
+
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Phone"]</FieldLabel>
+                                <TextEdit Text="@Filter.ContactInfo_02" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.ContactInfo_02),value))" />
+                            </Field>
+                        </Column>
+
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Email"]</FieldLabel>
+                                <TextEdit Text="@Filter.ContactInfo_04" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.ContactInfo_04),value))" />
+                            </Field>
+                        </Column>
+                    </Row>
+                </div>
+                <Row>
+                    <Column ColumnSize="ColumnSize.Is6">
+                        <Form id="CompaniesSearchForm" class="mb-3">
+                            <Addons>
+                                <Addon AddonType="AddonType.Body">
+                                    <TextEdit Text="@Filter.FilterText" TextChanged="@((string value) => OnFilterChanged(nameof(Filter.FilterText),value))"
+                                              Autofocus="true"
+                                              Placeholder="@L["Search"]">
+                                    </TextEdit>
+                                </Addon>
+                                <Addon AddonType="AddonType.End">
+                                    <SubmitButton Form="CompaniesSearchForm" Clicked="(()=> GetClassDataAsync())">
+                                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                                    </SubmitButton>
+                                </Addon>
+                            </Addons>
+                        </Form>
+                    </Column>
+
+                    <Column ColumnSize="ColumnSize.Is6">
+                        <Div Style="text-align: right;">
+                            <Button Background="Background.Default" Clicked="() => showAdvancedFilters = !showAdvancedFilters">
+                                @L["SeeAdvancedFilters"]
+                                <Icon Name="@(showAdvancedFilters ? IconName.ExpandLess : IconName.ExpandMore)" Class="me-1" />
+                            </Button>
+                        </Div>
+                    </Column>
+                </Row>
+            </CardBody>
+        </Card>
+
+        @* ************************* DATA GRID ************************* *@
+        <Card>
+            <CardBody>
+                <DataGrid TItem="TbCompanyDto"
+                          Data="TbCompanyList"
+                          SelectedRow="SelectedTbCompany"
+                          ReadData="OnDataGridReadAsync"
+                          TotalItems="TotalCount"
+                          Class="datagrid-detail"
+                          PageSize="PageSize"
+                          Responsive
+                          ShowPager
+                          ShowPageSizes
+                          PageSizeChanged="ChangePageSize"
+                          PagerPosition="DataGridPagerPosition.Bottom"
+                          PagerOptions="new(){ ButtonSize=Size.Small }">
+                    <LoadingTemplate>
+                        <Row Class="w-100 align-items-center" Style="height: 150px;">
+                            <Column>
+                                <RadarSpinner />
+                            </Column>
+                        </Row>
+                    </LoadingTemplate>
+                    <EmptyTemplate>
+                        <Row Class="w-100 align-items-center" Style="height: 150px;">
+                            <Column>
+                                <Heading Size="HeadingSize.Is4" TextAlignment="TextAlignment.Center">@L["NoDataAvailable"]</Heading>
+                            </Column>
+                        </Row>
+                    </EmptyTemplate>
+                    <DataGridColumns>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="Code"
+                                        Filterable="false"
+                                        Sortable="false"
+                                        Caption="#"
+                                        Width="2rem">
+                            <DisplayTemplate>
+                                @{
+                                    // Tính số thứ tự tiếp tục từ trang trước đó thay vì bắt đầu lại từ số 1
+                                    int index = (CurrentPage - 1) * PageSize + TbCompanyList.ToList().IndexOf(context) + 1;
+                                    @index
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="Code"
+                                        Caption="@L["Code"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).Code, 10);
+                                    if (context.Code != null && context.Code.Length >= 10)
+                                    {
+                                        <Tooltip Fade="true" Multiline="true" Text="@context.Code" TriggerTargetId="tooltip-custom-target" Inline>
+                                            <a class="d-block text-left" href="javascript:;" @onclick="() => GotoEditPage(context)">@truncatedCode</a>
+                                        </Tooltip>
+                                    }
+                                    else
+                                    {
+                                        <a class="d-block text-left" href="javascript:;" @onclick="() => GotoEditPage(context)">@truncatedCode</a>
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="BriefName"
+                                        Caption="@L["BriefName"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).BriefName, 20);
+                                    if (context.BriefName != null)
+                                    {
+                                        if (context.BriefName.Length >= 10)
+                                        {
+                                            <Tooltip Fade="true" Multiline="true" Text="@context.BriefName" TriggerTargetId="tooltip-custom-target" Inline>
+                                                <a>@truncatedCode</a>
+                                            </Tooltip>
+                                        }
+                                        else
+                                        {
+                                            <a>@truncatedCode</a>
+                                        }
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="Name"
+                                        Caption="@L["Name"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).Name, 20);
+                                    if (context.Name != null)
+                                    {
+                                        if (context.Name.Length >= 10)
+                                        {
+                                            <Tooltip Fade="true" Multiline="true" Text="@context.Name" TriggerTargetId="tooltip-custom-target" Inline>
+                                                <a>@truncatedCode</a>
+                                            </Tooltip>
+                                        }
+                                        else
+                                        {
+                                            <a>@truncatedCode</a>
+                                        }
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="ContactInfo_01"
+                                        Caption="@L["Address"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).ContactInfo_01, 20);
+                                    if (context.ContactInfo_01 != null)
+                                    {
+                                        if (context.ContactInfo_01.Length >= 10)
+                                        {
+                                            <Tooltip Fade="true" Multiline="true" Text="@context.ContactInfo_01" TriggerTargetId="tooltip-custom-target" Inline>
+                                                <a>@truncatedCode</a>
+                                            </Tooltip>
+                                        }
+                                        else
+                                        {
+                                            <a>@truncatedCode</a>
+                                        }
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="ContactInfo_02"
+                                        Caption="@L["Phone"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).ContactInfo_02, 11);
+                                    if (context.ContactInfo_02 != null)
+                                    {
+                                        if (context.ContactInfo_02.Length >= 10)
+                                        {
+                                            <Tooltip Fade="true" Multiline="true" Text="@context.ContactInfo_02" TriggerTargetId="tooltip-custom-target" Inline>
+                                                <a>@truncatedCode</a>
+                                            </Tooltip>
+                                        }
+                                        else
+                                        {
+                                            <a>@truncatedCode</a>
+                                        }
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto"
+                                        Field="ContactInfo_04"
+                                        Caption="@L["Email"]">
+                            <DisplayTemplate>
+                                @{
+                                    string truncatedCode = TruncateText((context as TbCompanyDto).ContactInfo_04, 15);
+                                    if (context.ContactInfo_04 != null)
+                                    {
+                                        if (context.ContactInfo_04.Length >= 10)
+                                        {
+                                            <Tooltip Fade="true" Multiline="true" Text="@context.ContactInfo_04" TriggerTargetId="tooltip-custom-target" Inline>
+                                                <a>@truncatedCode</a>
+                                            </Tooltip>
+                                        }
+                                        else
+                                        {
+                                            <a>@truncatedCode</a>
+                                        }
+                                    }
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbCompanyDto" Width="1rem"
+                                        Field="ContactInfo_04">
+                            <DisplayTemplate>
+                                <Button Style="background:#fff;border:#dbdbdb;border-style:inherit;border-width:1.5px;" Clicked="@(()=>GetHistoryAsync(context))">
+                                    <Icon Name="IconName.History" />
+                                </Button>
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                    </DataGridColumns>
+
+                </DataGrid>
+            </CardBody>
+        </Card> 
+    </Column>
+
+    @if (TbInfoUpdateList.Count() > 0)
+    {
+        <!-- Nội dung của Column 2 -->
+        <Column ColumnSize="ColumnSize.Is12" style="@($"display:{(isColumn2Visible ? "block" : "none")};")">
+            <Row>
+                <Column Style="margin-left: -15px;padding: 5px 0 10px 0;">
+                    <Button Style="border-style:double;border-width:2px;border-radius:2px;padding:0 15px;" Clicked="@HideHistory">
+                        <Icon Name="@IconName.AngleLeft" /> @L["Back"]
+                    </Button>
+                </Column>
+            </Row>
+            <Histories ReportClassList="@ReportClassList" ReportKindClassList="@ReportKindClassList" TypeClassList="@TypeClassList"
+                       GroupedChanges="@GroupedChanges" screenName="@screenName" screenId="@screenId"
+                       isColumn1Visible="@isColumn1Visible" isColumn2Visible="@isColumn2Visible" /> 
+        </Column>
+    }
+</Row>
+
+

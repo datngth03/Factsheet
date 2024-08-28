@@ -1,0 +1,274 @@
+﻿@page "/persons"
+
+@attribute [Authorize(Sabeco_FactsheetPermissions.TbCompanyPersons.Default)]
+@using Sabeco_Factsheet.Blazor.Client.Pages.History
+@using Sabeco_Factsheet.Blazor.Client.Components.Toolbar
+@using Sabeco_Factsheet.TbCompanyPersons
+@using Sabeco_Factsheet.TbInfoUpdates
+@using Sabeco_Factsheet.TbCompanies
+@using Sabeco_Factsheet.TbPersons
+@using Sabeco_Factsheet.TbUsers
+@using Sabeco_Factsheet.TbUserMappingPersons
+@using Sabeco_Factsheet.TbNationalities
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Sabeco_Factsheet.TbFileUploads
+@using Sabeco_Factsheet.TbFileUploadTemps
+
+
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using System.IO
+@using Volo.Abp.AspNetCore.Components.BlockUi
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Notifications
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Sabeco_Factsheet.Blazor.Client.Components;
+@using Sabeco_Factsheet.Permissions
+@using Volo.Abp.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.Http.Client
+
+@inherits Sabeco_FactsheetComponentBase
+@inject ITbInfoUpdatesAppService InfoUpdatesAppService
+@inject ITbUserMappingPersonsAppService TbUserMappingPersonsAppService
+@inject ITbUsersAppService TbUsersAppService
+@inject ITbCompanyPersonsAppService TbCompanyPersonsAppService
+@inject ITbCompaniesAppService TbCompaniesAppService
+@inject ITbPersonsAppService TbPersonsAppService
+@inject ITbFileUploadTempsAppService TbFileUploadTempsAppService
+@inject ITbFileUploadsAppService TbFileUploadsAppService
+@inject ITbNationalitiesAppService TbNationalitiesAppService
+
+@inject IJSRuntime JSRuntime
+@inject IBlockUiService _blockUiService
+@inject IUiMessageService _uiMessageService
+@inject IUiNotificationService _uiNotificationService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+@inject ShowActionListView ShowActionListView
+
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Menu:TbPersons"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+
+<Row>
+    <!-- Nội dung của Column 1 -->
+    <Column ColumnSize="ColumnSize.Is12" style="@($"display:{(isColumn1Visible ? "block" : "none")};")">
+
+        @* ************************* SEARCH ************************* *@
+        <Card Style="width:100%">
+            <CardBody>
+                <div style="display: @(!showAdvancedFilters ? "none" : "block")">
+                    <Row>
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Code"]</FieldLabel>
+                                <TextEdit Text="@FilterPerson.Code" TextChanged="@((string value) => OnFilterChanged(nameof(FilterPerson.Code),value))" />
+                            </Field>
+                        </Column>
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["FullName"]</FieldLabel>
+                                <TextEdit Text="@FilterPerson.FullName" TextChanged="@((string value) => OnFilterChanged(nameof(FilterPerson.FullName),value))" />
+                            </Field>
+                        </Column>
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["Gender"]</FieldLabel>
+                                <Select TValue="string" SelectedValue="@FilterPerson.Gender" SelectedValueChanged="@((string value) => OnFilterChanged(nameof(FilterPerson.Gender), value))">
+                                    <SelectItem TValue="string"></SelectItem>
+                                    @foreach (var gender in GenderList)
+                                    {
+                                        <SelectItem TValue="string" Value="@gender.Value">@gender.DisplayName</SelectItem>
+                                    }
+                                </Select>
+                            </Field>
+                        </Column>  
+                        <Column ColumnSize="ColumnSize.Is3">
+                            <Field>
+                                <FieldLabel>@L["NationalityCode"]</FieldLabel>
+                                <TextEdit Text="@FilterPerson.NationalityCode" TextChanged="@((string value) => OnFilterChanged(nameof(FilterPerson.NationalityCode),value))" />
+                            </Field>
+                        </Column>
+                    </Row>
+                </div>
+                <Row>
+                    <Column ColumnSize="ColumnSize.Is6">
+                        <Form id="PersonsSearchForm" class="mb-3">
+                            <Addons>
+                                <Addon AddonType="AddonType.Body">
+                                    <TextEdit Text="@FilterPerson.FilterText" TextChanged="@((string value) => OnFilterChanged(nameof(FilterPerson.FilterText),value))"
+                                              Autofocus="true"
+                                              Placeholder="@L["Search"]">
+                                    </TextEdit>
+                                </Addon>
+                                <Addon AddonType="AddonType.End">
+                                    <SubmitButton Form="PersonsSearchForm" Clicked="(()=> GetPersonClassDataAsync())">
+                                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                                    </SubmitButton>
+                                </Addon>
+                            </Addons>
+                        </Form>
+                    </Column>
+
+                    <Column ColumnSize="ColumnSize.Is6">
+                        <Div Style="text-align: right;">
+                            <Button Background="Background.Default" Clicked="() => showAdvancedFilters = !showAdvancedFilters">
+                                @L["SeeAdvancedFilters"]
+                                <Icon Name="@(showAdvancedFilters ? IconName.ExpandLess : IconName.ExpandMore)" Class="me-1" />
+                            </Button>
+                        </Div>
+                    </Column>
+                </Row>
+            </CardBody>
+        </Card>
+
+        @* ************************* DATA GRID ************************* *@
+        <Card>
+            <CardBody>
+
+                <DataGrid TItem="TbPersonDto"
+                          Data="TbPersonList"
+                          SelectedRows="SelectedTbPersons"
+                          ReadData="OnDataGridReadAsync"
+                          TotalItems="TotalCount" 
+                          PageSize="PageSize"
+                          Class="datagrid-detail"
+                          Responsive
+                          ShowPager
+                          ShowPageSizes
+                          PageSizeChanged="ChangePageSize"
+                          PagerPosition="DataGridPagerPosition.Bottom"
+                          PagerOptions="new(){ ButtonSize=Size.Small }">
+                    <LoadingTemplate>
+                        <Row Class="w-100 align-items-center" Style="height: 150px;">
+                            <Column>
+                                <RadarSpinner />
+                            </Column>
+                        </Row>
+                    </LoadingTemplate>
+                    <EmptyTemplate>
+                        <Row Class="w-100 align-items-center" Style="height: 150px;">
+                            <Column>
+                                <Heading Size="HeadingSize.Is4" TextAlignment="TextAlignment.Center">@L["NoDataAvailable"]</Heading>
+                            </Column>
+                        </Row>
+                    </EmptyTemplate>
+
+                    <DataGridColumns>
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="Code"
+                                        Filterable="false"
+                                        Sortable="false"
+                                        Caption="#"
+                                        Width="2rem">
+                            <DisplayTemplate>
+                                @{
+                                    // Tính số thứ tự tiếp tục từ trang trước đó thay vì bắt đầu lại từ số 1
+                                    int index = (CurrentPage - 1) * PageSize + TbPersonList.ToList().IndexOf(context) + 1;
+                                    @index
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="Code"
+                                        Caption="@L["Code"]">
+                            <DisplayTemplate>
+                                <Tooltip Fade="true" Multiline="true" Text="@context.Code" TriggerTargetId="tooltip-custom-target" Inline>
+                                    <a href="javascript:;" @onclick="() => GotoEditPage(context)" style="text-decoration: underline;">@context.Code</a>
+                                </Tooltip>
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="FullName"
+                                        Caption="@L["FullName"]">
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="Gender"
+                                        Caption="@L["Gender"]">
+                            <DisplayTemplate>
+                                @if (context.Gender == "0")
+                                {
+                                    <span>@L["Male"]</span>
+                                }
+                                else if (context.Gender == "1")
+                                {
+                                    <span>@L["Female"]</span>
+                                }
+                                else
+                                {
+                                    <span>@L["Unknown"]</span>
+                                }
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="BirthDate"
+                                        Caption="@L["BirthDate"]">
+                            <DisplayTemplate>
+                                @context.BirthDate.ToString("dd/MM/yyyy")
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto"
+                                        Field="NationalityCode"
+                                        Caption="@L["NationalityCode"]">
+                            <DisplayTemplate>
+                                @GetNationalityName(context.NationalityCode)
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto" Width="1rem" Field="Code">
+                            <DisplayTemplate> 
+                                  <Button Style="background:#fff; border:#dbdbdb; border-style:inherit; border-width:1.5px;"
+                                                Clicked="@(() => DownloadAsync(context))">
+                                        <Icon Name="IconName.FileDownload" />
+                                  </Button> 
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                        <DataGridColumn TItem="TbPersonDto" Width="1rem"
+                                        Field="Code">
+                            <DisplayTemplate>
+                                <Button Style="background:#fff;border:#dbdbdb;border-style:inherit;border-width:1.5px;" Clicked="@(()=>GetHistoryAsync(context))">
+                                    <Icon Name="IconName.History" />
+                                </Button>
+                            </DisplayTemplate>
+                        </DataGridColumn>
+
+                    </DataGridColumns>   
+                </DataGrid>
+            </CardBody>
+        </Card>
+
+    </Column>
+
+    @if (TbInfoUpdateList.Any())
+    {
+        <!-- Nội dung của Column 2 -->
+        <Column ColumnSize="ColumnSize.Is12" style="@($"display:{(isColumn2Visible ? "block" : "none")};")">
+            <Row>
+                <Column Style="margin-left: -15px;padding: 5px 0 10px 0;">
+                    <Button Style="border-style:double;border-width:2px;border-radius:2px;padding:0 15px;" Clicked="@HideHistory">
+                        <Icon Name="@IconName.AngleLeft" /> @L["Back"]
+                    </Button>
+                </Column>
+            </Row>
+            <Histories GroupedChanges="@GroupedChanges" screenName="@screenName" screenId="@screenId" isColumn1Visible="@isColumn1Visible" isColumn2Visible="@isColumn2Visible" />
+        </Column>
+    }
+</Row>

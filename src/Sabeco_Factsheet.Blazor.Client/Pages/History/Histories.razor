@@ -1,0 +1,232 @@
+﻿@attribute [Authorize(Sabeco_FactsheetPermissions.TbInfoUpdates.Default)]
+@using DevExpress.Blazor
+@using Sabeco_Factsheet.TbCompanies
+@using Sabeco_Factsheet.TbInfoUpdates
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Blazorise
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using Volo.Abp.AspNetCore.Components.BlockUi
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+
+@using Sabeco_Factsheet.Permissions
+@using Volo.Abp.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.Http.Client
+@inherits Sabeco_FactsheetComponentBase
+@inject ITbCompaniesAppService TbCompaniesAppService
+@inject ITbInfoUpdatesAppService InfoUpdatesAppService
+
+
+@inject IUiMessageService UiMessageService
+@inject IBlockUiService BlockUiService
+@inject IUiMessageService UiMessageService
+@inject AbpBlazorMessageLocalizerHelper<Sabeco_FactsheetResource> LH
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+
+@if (GroupedChanges != null && GroupedChanges.Any())
+{
+    <Card>
+        <CardBody>
+            <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+                @foreach (var group in GroupedChanges)
+                {
+                    // Lọc các phần tử duy nhất dựa trên Command
+                    var uniqueChanges = group
+                    .GroupBy(change => new { change.Command })
+                    .Select(g => g.First())
+                    .ToList();
+
+                    @foreach (var change in uniqueChanges)
+                    {
+                        string captionName = change.Command + " - " + (change.GroupName != null ? @L[$"{change.GroupName}"] : @L[$"{change.TableName}"]) + " - " +
+                        change?.crt_date.Value.ToString("dd/MM/yyyy HH:mm:ss");
+
+                        <DxFormLayoutGroup ColSpanMd="12" Caption="@captionName" HeaderCssClass="my-header"
+                                           ExpandButtonDisplayMode="GroupExpandButtonDisplayMode.Start"
+                                           AnimationType="LayoutAnimationType.Slide">
+                            <Items>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 150px;"></th>
+                                            <th style="width: 350px;">@L["Before"]</th>
+                                            <th style="width: 350px;">@L["After"]</th>
+                                            <th style="width: 100px;">@L["Status"]</th>
+                                            <th style="width: 150px;">@L["Time"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var change in group)
+                                        {
+                                            if (change.ColumnName != "Remark" || (change.TableName != "tbLandInfo" && change.TableName != "tbLandInfo_Temp"))
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(change.ColumnName))
+                                                        {
+                                                            if (change.ColumnName == "Note" && (change.TableName == "tbCompanyMajor" || change.TableName == "tbCompanyMajor_Temp"))
+                                                            {
+                                                                <a>@L["tbCompanyMajor.Note"]</a>
+                                                            }
+                                                            else if (change.ColumnName == "Note" && (change.TableName == "tbBrewery" || change.TableName == "tbBrewery_Temp"))
+                                                            {
+                                                                <a>@L["tbBrewery.Note"]</a>
+                                                            }
+                                                            else if (change.ColumnName == "Note" && (change.TableName == "tbPerson" || change.TableName == "tbPerson_Temp"))
+                                                            {
+                                                                <a>@L["tbPerson.Note"]</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                @L[$"{change.ColumnName}"]
+                                                            }
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(change.LastValue))
+                                                        {
+                                                            if (change.ColumnName == "Image")
+                                                            {
+                                                                if (!string.IsNullOrEmpty(change.LastValue) && change.LastValue != "null" && !change.LastValue.Contains("null"))
+                                                                {
+                                                                    <img id="dropzone-image"
+                                                                         src="@($"data:image/jpeg;base64,{change.LastValue}")"
+                                                                         alt="Uploaded image"
+                                                                         style="border-radius: 20px; max-width: 200px; height: 100px;"
+                                                                         loading="lazy" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <a>null</a>
+                                                                }
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyType")
+                                                            {
+                                                                string lastValue = "null";
+                                                                if (int.TryParse(change.LastValue, out var id))
+                                                                {
+                                                                    lastValue = TypeClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(lastValue, 30)</a>
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyTypeShareholdingCode")
+                                                            {
+                                                                string lastValue = "null";
+                                                                if (int.TryParse(change.LastValue, out var id))
+                                                                {
+                                                                    lastValue = ReportClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(lastValue, 30)</a>
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyTypesCode")
+                                                            {
+                                                                string lastValue = "null";
+                                                                if (int.TryParse(change.LastValue, out var id))
+                                                                {
+                                                                    lastValue = ReportKindClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(lastValue, 30)</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a>@TruncateText((change.LastValue ?? "null"), 30)</a>
+                                                            }
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(change.NewValue))
+                                                        {
+                                                            if (change.ColumnName == "Image")
+                                                            {
+                                                                if (!string.IsNullOrEmpty(change.NewValue) && change.NewValue != "null" && !change.NewValue.Contains("null"))
+                                                                {
+                                                                    <img id="dropzone-image"
+                                                                         src="@($"data:image/jpeg;base64,{change.NewValue}")"
+                                                                         alt="Uploaded image"
+                                                                         style="border-radius: 20px; max-width: 200px; height: 100px;"
+                                                                         loading="lazy" />
+                                                                }
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyType")
+                                                            {
+                                                                string newValue = "null";
+                                                                if (int.TryParse(change.NewValue, out var id))
+                                                                {
+                                                                    newValue = TypeClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(newValue, 30)</a>
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyTypeShareholdingCode")
+                                                            {
+                                                                string newValue = "null";
+                                                                if (int.TryParse(change.NewValue, out var id))
+                                                                {
+                                                                    newValue = ReportClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(newValue, 30)</a>
+                                                            }
+                                                            else if (change.ColumnName == "idCompanyTypesCode")
+                                                            {
+                                                                string newValue = "null";
+                                                                if (int.TryParse(change.NewValue, out var id))
+                                                                {
+                                                                    newValue = ReportKindClassList.FirstOrDefault(x => x.Id == id)?.Name_EN ?? "null";
+                                                                }
+                                                                <a>@TruncateText(newValue, 30)</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a>@TruncateText((change.NewValue ?? "null"), 30)</a>
+                                                            }
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (change.DocStatus.HasValue)
+                                                        {
+                                                            var status = change.DocStatus.Value;
+                                                            @if (status == 0)
+                                                            {
+                                                                <Badge Color="Color.Warning">@L["Waiting for Approval"]</Badge>
+                                                            }
+                                                            else if (status == 1)
+                                                            {
+                                                                <Badge Color="Color.Success">@L["Approved"]</Badge>
+                                                            }
+                                                            else if (status == 2)
+                                                            {
+                                                                <Badge Color="Color.Danger">@L["Rejected"]</Badge>
+                                                            }
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (change.TimeAssessment.HasValue)
+                                                        {
+                                                            @change.TimeAssessment.Value.ToString("dd/MM/yyyy HH:mm:ss")
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            } 
+                                        }
+
+                                    </tbody>
+                                </table>
+                            </Items>
+                        </DxFormLayoutGroup>
+
+                    }
+                }
+            </DxFormLayout>
+        </CardBody>
+    </Card>
+}

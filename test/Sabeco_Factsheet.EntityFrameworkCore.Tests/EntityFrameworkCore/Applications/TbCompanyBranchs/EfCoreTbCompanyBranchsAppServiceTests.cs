@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbCompanyBranchs;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbCompanyBranchs;
+
+public class EfCoreTbCompanyBranchsAppServiceTests : TbCompanyBranchsAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

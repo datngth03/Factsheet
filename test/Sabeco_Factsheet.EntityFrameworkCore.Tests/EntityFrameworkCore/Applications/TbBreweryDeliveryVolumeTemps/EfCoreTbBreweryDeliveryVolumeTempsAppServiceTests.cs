@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbBreweryDeliveryVolumeTemps;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbBreweryDeliveryVolumeTemps;
+
+public class EfCoreTbBreweryDeliveryVolumeTempsAppServiceTests : TbBreweryDeliveryVolumeTempsAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

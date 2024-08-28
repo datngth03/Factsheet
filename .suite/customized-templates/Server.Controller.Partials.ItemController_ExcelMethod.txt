@@ -1,0 +1,15 @@
+##3DAE389BE839D42A3FAC7468673CF0AC##
+
+        [HttpGet]
+        [Route("as-excel-file")]
+        public virtual Task<IRemoteStreamContent> GetListAsExcelFileAsync(%%entity-name%%ExcelDownloadDto input, string fileName)
+        {
+            return _%%entity-name-plural-camelcase%%AppService.GetListAsExcelFileAsync(input, fileName);
+        }
+
+        [HttpGet]
+        [Route("download-token")]
+        public virtual Task<%%solution-namespace%%%%<if:ApplicationContractsNotExists>%%%%.AppServices%%</if:ApplicationContractsNotExists>%%.Shared.DownloadTokenResultDto> GetDownloadTokenAsync()
+        {
+            return _%%entity-name-plural-camelcase%%AppService.GetDownloadTokenAsync();
+        }

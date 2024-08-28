@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Sabeco_Factsheet.Blazor.Client": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51276;http://localhost:51277"
+    }
+  }
+}

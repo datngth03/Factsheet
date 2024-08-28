@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbUserMappingCompanies;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbUserMappingCompanies;
+
+public class EfCoreTbUserMappingCompaniesAppServiceTests : TbUserMappingCompaniesAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbBreweryImages;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbBreweryImages;
+
+public class EfCoreTbBreweryImagesAppServiceTests : TbBreweryImagesAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbAdditionInfos;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbAdditionInfos;
+
+public class EfCoreTbAdditionInfosAppServiceTests : TbAdditionInfosAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbHisBreweries;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbHisBreweries;
+
+public class EfCoreTbHisBreweriesAppServiceTests : TbHisBreweriesAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

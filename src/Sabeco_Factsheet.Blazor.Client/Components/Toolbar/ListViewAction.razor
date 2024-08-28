@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Volo.Abp.Http.Client
+
+@inherits Sabeco_FactsheetComponentBase
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject ShowActionListView ShowActionListView
+<div class="nav-link">
+	@if (ShowActionListView.UnreadCount == true)
+	{
+		<Dropdown>
+			<DropdownToggle Color="Color.Primary">
+				Action
+			</DropdownToggle>
+			<DropdownMenu Style="z-index: 1025;">
+				@if (IsVisibleImportExcel == true)
+				{
+					<DropdownItem Clicked="ImportExcelAsync">@L["Import"]</DropdownItem>
+					<DropdownDivider />
+				}
+
+				@if (IsVisibleExportExcel == true)
+				{
+					<DropdownItem Clicked="DownloadAsExcelAsync">@L["Export"]</DropdownItem>
+					<DropdownDivider />
+				} 
+			</DropdownMenu>
+		</Dropdown>
+	}
+	else
+	{
+		<Button Clicked="New" Color="Color.Primary" Class="btn btn-primary">
+			<Icon Name="IconName.Add" Style="margin-right:5px"></Icon>
+			@L["Add new"]
+		</Button>
+	}
+</div>
+
+@code {
+
+	[Parameter]
+	public bool IsVisibleImportExcel { get; set; }
+
+	[Parameter]
+	public bool IsVisibleExportExcel { get; set; }
+
+	[Parameter]
+	public EventCallback ImportExcelAsync { get; set; }
+
+	[Parameter]
+	public EventCallback DownloadAsExcelAsync { get; set; }
+
+	[Parameter]
+	public EventCallback Delete { get; set; }
+
+	[Parameter]
+	public EventCallback New { get; set; }
+	
+	protected override Task OnInitializedAsync()
+	{
+		ShowActionListView.UnreadCount = false;
+		ShowActionListView.UnreadCountChanged += (s, e) => StateHasChanged();
+		return base.OnInitializedAsync();
+	}
+}

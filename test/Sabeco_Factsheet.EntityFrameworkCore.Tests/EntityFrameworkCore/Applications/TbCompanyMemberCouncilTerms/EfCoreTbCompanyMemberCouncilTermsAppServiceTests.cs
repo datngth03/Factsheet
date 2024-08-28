@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbCompanyMemberCouncilTerms;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbCompanyMemberCouncilTerms;
+
+public class EfCoreTbCompanyMemberCouncilTermsAppServiceTests : TbCompanyMemberCouncilTermsAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

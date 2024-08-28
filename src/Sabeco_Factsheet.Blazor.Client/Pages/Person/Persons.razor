@@ -1,0 +1,537 @@
+﻿@page "/persons/{Id}"
+
+@attribute [Authorize(Sabeco_FactsheetPermissions.TbCompanyPersons.Default)]
+
+@using Sabeco_Factsheet.Blazor.Client.Pages.AttachmentFile
+@using Sabeco_Factsheet.TbFileUploads
+@using Sabeco_Factsheet.TbUserMappingCompanies
+@using Sabeco_Factsheet.TbUserMappingPersons
+@using Sabeco_Factsheet.TbFileUploadTemps
+@using Sabeco_Factsheet.TbCompanyPersons
+@using Sabeco_Factsheet.TbUsers
+@using Sabeco_Factsheet.TbPersons
+@using Sabeco_Factsheet.TbPersonTemps
+@using Sabeco_Factsheet.TbInfoUpdates
+@using Sabeco_Factsheet.TbNationalities
+@using Sabeco_Factsheet.TbCompanies
+@using Sabeco_Factsheet.TbPositions
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Shared
+@using Sabeco_Factsheet.Permissions
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+
+@using Blazorise
+@using Blazorise.Snackbar
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using DevExpress.Blazor
+
+@using Volo.Abp.AspNetCore.Components.BlockUi
+@using Volo.Abp.AspNetCore.Components.Progression
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Notifications
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+
+@inherits Sabeco_FactsheetComponentBase
+
+@inject IJSRuntime JSRuntime
+@inject ITbUsersAppService TbUsersAppService
+@inject ITbUserMappingPersonsAppService TbUserMappingPersonsAppService
+@inject ITbUserMappingCompaniesAppService TbUserMappingCompaniesAppService
+@inject ITbFileUploadTempsAppService TbFileUploadTempsAppService
+@inject ITbFileUploadsAppService TbFileUploadsAppService
+@inject ITbPersonTempsAppService TbPersonTempsAppService
+@inject ITbInfoUpdatesAppService TbInfoUpdatesAppService
+@inject ITbCompanyPersonsAppService TbCompanyPersonsAppService
+@inject ITbPersonsAppService TbPersonsAppService
+@inject ITbNationalitiesAppService TbNationalitiesAppService
+@inject ITbCompaniesAppService TbCompaniesAppService
+@inject ITbPositionsAppService TbPositionsAppService
+
+@inject IPageProgressService PageProgressService
+
+@inject IUiMessageService _uiMessageService
+@inject IUiNotificationService _uiNotificationService
+@inject IBlockUiService _blockUiService
+@inject IUiPageProgressService _pageProgressService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+
+    @* ************************* PAGE HEADER ************************* *@
+
+@{
+    string code = string.Empty;
+    if (EditingPerson.Code != null)
+    {
+        code = EditingPerson.Code.Length > 15 ? EditingPerson.Code.Substring(0, 15) + "..." : EditingPerson.Code;
+    }
+}
+<PageHeader Title="@(code + (isDataEntryChanged? " (*)":""))" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+    <p></p>
+</PageHeader>
+
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+
+
+
+<Row>
+    <Column>
+        @* ************************* Edit Form Section ************************* *@
+        <Card>
+            <CardBody>
+                <Row>
+                    <EditForm @ref="EditFormMain"
+                              Model="@EditingPerson"
+                              Context="EditFormContext">
+                        <DataAnnotationsValidator />
+                        <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+                            <DxFormLayoutItem ColSpanLg="12" ColSpanMd="12">
+                                <div class="upload-container" style="width: 9rem">
+                                    <div id="dropzone-external" class="card flex-box" style="width: 9rem; height: 8rem; border: 1px dashed #b8b8b8;">
+                                        @if ((uploadComplete && !string.IsNullOrEmpty(EditingPerson.Image)) || !string.IsNullOrEmpty(EditingPerson.Image))
+                                        {
+                                            <img id="dropzone-image" src="@($"data:image/jpeg;base64,{EditingPerson.Image}")" alt="Uploaded image" style="max-width: 100%; height: 8rem;" />
+                                        }
+                                        else if (totalBytesRead != 0)
+                                        {
+                                            <DxProgressBar CssClass="upload-progress" Value="@totalBytesRead" MaxValue="@fileSize" Label="@(totalBytesRead == fileSize ? "Your image is almost ready..." : string.Empty)" />
+                                        }
+                                        else
+                                        {
+                                            <div id="dropzone-text" class="flex-box">
+                                                <div style="display: flex; height: 8rem; align-items: center; justify-content: center;">
+                                                    <Row>
+                                                        <Column ColumnSize="ColumnSize.Is12" Style="text-align: center; font-size: 20px;">
+                                                            <i class="fa fa-plus"></i>
+                                                        </Column>
+                                                        <Column ColumnSize="ColumnSize.Is12" Style="text-align: center; font-size: 16px;">
+                                                            <span>@L["Upload image"]</span>
+                                                        </Column>
+                                                    </Row>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <DxFileInput Visible="@false" MaxFileSize="15000000" FilesUploading="@OnFilesUploading" CssClass="dropZone-owner" ExternalSelectButtonCssSelector="#dropzone-external" ExternalDropZoneCssSelector="#dropzone-external" ExternalDropZoneDragOverCssClass="dropzone-hover" AcceptedFileTypes="@allowedFileExtensions" />
+                                </div>
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Code"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Code" Enabled="false"
+                                           TextExpression="@(() => EditingPerson.Code)"
+                                           TextChanged="@((newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Code = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Code)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["FullName"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.FullName"
+                                           TextExpression="@(() => EditingPerson.FullName)"
+                                           TextChanged="@((newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.FullName = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.FullName)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Gender"] )" ColSpanLg="4" ColSpanMd="12">
+                                <DxComboBox Data="@GenderList" DropDownWidthMode="DropDownWidthMode.EditorWidth"
+                                            Value="@EditingPerson.Gender"
+                                            ValueExpression="(() => EditingPerson.Gender)"
+                                            TextFieldName="DisplayName"
+                                            ValueFieldName="Value"
+                                            InputCssClass="focus-value"
+                                            ValueChanged="@((string? gender) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Gender = gender;
+                                                        })"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                            ShowValidationIcon="true">
+                                </DxComboBox>
+                                <ValidationMessage For="(() => EditingPerson.Gender)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Address"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Address"
+                                           TextExpression="@(() => EditingPerson.Address)"
+                                           TextChanged="@((newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Address = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Address)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BirthDate"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxDateEdit Date="@EditingPerson.BirthDate"
+                                            DisplayFormat="dd/MM/yyyy"
+                                            DateExpression="@(() => EditingPerson.BirthDate)"
+                                            DateChanged="@((DateTime newValue) =>{
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.BirthDate = newValue;
+														})">
+                                </DxDateEdit>
+                                <ValidationMessage For="@(() => EditingPerson.BirthDate)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["BirthPlace"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.BirthPlace"
+                                           TextExpression="@(() => EditingPerson.BirthPlace)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.BirthPlace = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.BirthPlace)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["NationalityCode"])" ColSpanLg="4" ColSpanMd="12" Enabled="false">
+                                <DxComboBox Data="@NationalityList" DropDownWidthMode="DropDownWidthMode.EditorWidth"
+                                            Value="EditingPerson.NationalityCode"
+                                            ValueExpression="(() => EditingPerson.NationalityCode)"
+                                            ValueChanged="@((string? e) => SelectedNationalityChangedAsync(e))"
+                                            TextFieldName="@nameof(TbNationalityDto.Name_vn)"
+                                            ValueFieldName="@nameof(TbNationalityDto.Code)"
+                                            InputCssClass="focus-value"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                            ShowValidationIcon="true">
+                                </DxComboBox>
+                                <ValidationMessage For="@(() => EditingPerson.CompanyId)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["IDCardNo"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.IDCardNo"
+                                           TextExpression="@(() => EditingPerson.IDCardNo)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.IDCardNo = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.IDCardNo)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["IDCardDate"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxDateEdit Date="@EditingPerson.IDCardDate"
+                                            DisplayFormat="dd/MM/yyyy"
+                                            DateExpression="@(() => EditingPerson.IDCardDate)"
+                                            DateChanged="@(async (DateTime? newValue) => await OnDateChanged(newValue))">
+                                </DxDateEdit>
+                                <ValidationMessage For="@(() => EditingPerson.IDCardDate)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Religion"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Religion"
+                                           TextExpression="@(() => EditingPerson.Religion)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Religion = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Religion)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Email"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Email"
+                                           TextExpression="@(() => EditingPerson.Email)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Email = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Email)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Phone"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Phone"
+                                           TextExpression="@(() => EditingPerson.Phone)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Phone = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Phone)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Ethnicity"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Ethnicity"
+                                           TextExpression="@(() => EditingPerson.Ethnicity)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Ethnicity = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Ethnicity)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Company"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxComboBox Data="@TbCompanyList" DropDownWidthMode="DropDownWidthMode.EditorWidth"
+                                            Value="EditingPerson.CompanyId"
+                                            ValueExpression="(() => EditingPerson.CompanyId)"
+                                            ValueChanged="@((int? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.CompanyId = newValue;
+														})"
+                                            TextFieldName="Name"
+                                            ValueFieldName="Id"
+                                            InputCssClass="focus-value"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                                            ShowValidationIcon="true">
+                                </DxComboBox>
+                                <ValidationMessage For="@(() => EditingPerson.CompanyId)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["tbPerson.Note"])" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingPerson.Note"
+                                           TextExpression="@(() => EditingPerson.Note)"
+                                           TextChanged="@((string? newValue) => {
+                                                        isDataEntryChanged = true;
+                                                        EditingPerson.Note = newValue;
+														})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingPerson.Note)" />
+                            </DxFormLayoutItem>
+                        </DxFormLayout>
+
+                        <DxFormLayout style="margin-top:15px">
+                            <DxFormLayoutItem ColSpanMd="6">
+                                <DxCheckBox CssClass="w-100" Enabled="false"
+                                            Checked="@EditingPerson.IsCheckRetirement"
+                                            CheckedExpression="@(()=>EditingPerson.IsCheckRetirement)"
+                                            CheckedChanged="@((bool? newValue)=> { isDataEntryChanged = true;
+                                                        EditingPerson.IsCheckRetirement = newValue;})"
+                                            Alignment="@Alignment"
+                                            LabelPosition="@LabelPosition">
+                                    @L["is Check Retirement"]
+                                </DxCheckBox>
+                            </DxFormLayoutItem>
+                        </DxFormLayout>
+
+                        <DxFormLayout style="margin-top:15px">
+                            <DxFormLayoutItem ColSpanMd="6">
+                                <DxCheckBox CssClass="w-100" Enabled="false"
+                                            Checked="@EditingPerson.IsCheckTermEnd"
+                                            CheckedExpression="@(()=>EditingPerson.IsCheckTermEnd)"
+                                            CheckedChanged="@((bool? newValue)=> {isDataEntryChanged = true;
+                                                        EditingPerson.IsCheckTermEnd = newValue;})"
+                                            Alignment="@Alignment"
+                                            LabelPosition="@LabelPosition">
+                                    @L["is Check TermEnd"]
+                                </DxCheckBox>
+                            </DxFormLayoutItem>
+                        </DxFormLayout>
+
+                        <DxFormLayout style="margin-top:15px">
+                            <DxFormLayoutItem ColSpanMd="6">
+                                @if (EditingFileUpload.fileName != null)
+                                {
+                                    <FileDisplay fileName="@EditingFileUpload.fileName" fileId="EditingFileUpload.Id" OnDelete="RemoveFileAsync" />
+                                }
+                                else
+                                {
+                                    <UploadFiles OnFileSelected="HandleFileSelected" />
+                                }
+                            </DxFormLayoutItem>
+                        </DxFormLayout>
+
+                    </EditForm>
+                </Row>
+            </CardBody>
+        </Card>
+
+        <Card>
+            <CardBody>
+                <EditForm @ref="EditFormMain" Model="@EditingPerson" Context="EditFormContext">
+                    <DataAnnotationsValidator />
+                    <DxFormLayout CaptionPosition="CaptionPosition.Vertical">
+                        @******************************************** Responsibility ***********************************@
+                        <DxFormLayoutGroup ColSpanMd="12" Caption="@L["Responsibility"]" HeaderCssClass="my-header"
+                                           ExpandButtonDisplayMode="GroupExpandButtonDisplayMode.Start" CssClass="my-group"
+                                           AnimationType="LayoutAnimationType.Slide">
+                            <HeaderContentTemplate>
+                                <Div Style="display:flex;justify-content:space-between; align-items:center; width:100%">
+                                    <Div>@L["Responsibility"]</Div>
+                                </Div>
+                            </HeaderContentTemplate>
+                            <Items>
+
+                                <Div Class="row" Style="width: 100%;">
+                                    <DataGrid TItem="TbCompanyPersonDto"
+                                              Data="CompanyPersonLists"
+                                              ReadData="OnDataGridReadAsync"
+                                              TotalItems="TotalCount"
+                                              ShowPager="true"
+                                              Responsive="true"
+                                              PageSize="PageSize"
+                                              Class="datagrid-detail">
+                                        <LoadingTemplate>
+                                            <Row Class="w-100 align-items-center" Style="height: 150px;">
+                                                <Column>
+                                                    <RadarSpinner />
+                                                </Column>
+                                            </Row>
+                                        </LoadingTemplate>
+                                        <EmptyTemplate>
+                                            <Row Class="w-100 align-items-center" Style="height: 150px;">
+                                                <Column>
+                                                    <Heading Size="HeadingSize.Is4" TextAlignment="TextAlignment.Center">@L["NoDataAvailable"]</Heading>
+                                                </Column>
+                                            </Row>
+                                        </EmptyTemplate>
+
+                                        <DataGridColumns>
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="CompanyId"
+                                                            Filterable="false"
+                                                            Sortable="false"
+                                                            Caption="#"
+                                                            Width="2rem">
+                                                <DisplayTemplate>
+                                                    @{
+                                                        var startIndex = (CurrentPage - 1) * PageSize;
+                                                        var currentIndex = startIndex + CompanyPersonLists.ToList().IndexOf(context) + 1;
+                                                        @(currentIndex)
+                                                    }
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="CompanyId"
+                                                            Caption="@L["Company"]">
+                                                <DisplayTemplate>
+                                                    @GetCompanyName(context.CompanyId)
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="PositionId"
+                                                            Caption="@L["Position"]">
+                                                <DisplayTemplate>
+                                                    @GetPositionNameEN(context.PositionId)
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="FromDate"
+                                                            Caption="@L["FromDate"]">
+                                                <DisplayTemplate>
+                                                    @context.FromDate?.ToString("dd/MM/yyyy")
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="ToDate"
+                                                            Caption="@L["ToDate"]">
+                                                <DisplayTemplate>
+                                                    @context.ToDate?.ToString("dd/MM/yyyy")
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="PersonalSharePercentage"
+                                                            Caption="@L["PersonalSharePercentage"]">
+                                                <DisplayTemplate>
+                                                    @{
+                                                        if (context.PersonalSharePercentage != null)
+                                                        {
+                                                            if (context.PersonalSharePercentage != 0)
+                                                            {
+                                                                <a>@context.PersonalSharePercentage.Value.ToString("N0")</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a>0</a>
+                                                            }
+                                                        }
+                                                    }
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="RepresentativePercentage"
+                                                            Caption="@L["RepresentativePercentage"]">
+                                                <DisplayTemplate>
+                                                    @{
+                                                        if (context.RepresentativePercentage != null)
+                                                        {
+                                                            if (context.RepresentativePercentage != 0)
+                                                            {
+                                                                <a>@context.RepresentativePercentage.Value.ToString("N0")</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a>0</a>
+                                                            }
+                                                        }
+                                                    }
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="Note"
+                                                            Caption="@L["Rep. From Sabeco"]">
+                                                <DisplayTemplate>
+                                                    @if (context.Note == "Yes")
+                                                    {
+                                                        <Badge Color="Color.Success">@L["Yes"]</Badge>
+                                                    }
+                                                    else
+                                                    {
+                                                        <Badge Color="Color.Danger">@L["No"]</Badge>
+                                                    }
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                            <DataGridColumn TItem="TbCompanyPersonDto"
+                                                            Field="IsActive"
+                                                            Caption="@L["Active"]">
+                                                <DisplayTemplate>
+                                                    <DxCheckBox @bind-Checked="context.IsActive" Enabled="false" />
+                                                </DisplayTemplate>
+                                            </DataGridColumn>
+
+                                        </DataGridColumns>
+                                    </DataGrid>
+                                </Div>
+                            </Items>
+                        </DxFormLayoutGroup>
+                    </DxFormLayout>
+                </EditForm>
+            </CardBody>
+        </Card>
+
+    </Column>
+</Row>

@@ -1,0 +1,8 @@
+using System;
+
+namespace Sabeco_Factsheet.TbBreweryDeliveryVolumeTemps;
+
+[Serializable]
+public class TbBreweryDeliveryVolumeTempDownloadTokenCacheItem : TbBreweryDeliveryVolumeTempDownloadTokenCacheItemBase
+{
+}

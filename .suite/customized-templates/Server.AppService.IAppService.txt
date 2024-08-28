@@ -1,0 +1,33 @@
+##F48165D6F9CB06186415FCE294F19571##
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Application.Services;
+%%<if:ShouldInjectDistributedCacheService>%%using Volo.Abp.Content;%%</if:ShouldInjectDistributedCacheService>%%
+%%<if:ShouldInjectDistributedCacheService>%%using %%solution-namespace%%.Shared;%%</if:ShouldInjectDistributedCacheService>%%
+
+namespace %%solution-namespace%%.%%entity-namespace%%
+{
+	public %%custom-code-partial-modifier%% interface I%%entity-name-plural%%AppService : IApplicationService
+    {
+        %%file-methods%%
+    
+        %%master-child-getlist-methods%%
+    
+        %%getlist-method%%
+
+        Task<%%entity-name%%Dto> GetAsync(%%primary-key%% id);
+
+        %%navigation-property-lookup-methods%%
+
+        Task DeleteAsync(%%primary-key%% id);
+
+        Task<%%entity-name%%Dto> CreateAsync(%%entity-name%%CreateDto input);
+
+        Task<%%entity-name%%Dto> UpdateAsync(%%primary-key%% id, %%entity-name%%UpdateDto input);
+
+        %%excel-method-interface%%%%bulk-delete-methods-interface%%%%download-token-method-interface%%
+
+    }
+}

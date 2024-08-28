@@ -1,0 +1,56 @@
+##3F65E920427E5317E4C98CDC544B5A8F##
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Volo.Abp;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Domain.Services;
+%%<if:CheckConcurrency>%%using Volo.Abp.Data;%%</if:CheckConcurrency>%%
+
+namespace %%solution-namespace%%.%%entity-namespace%%
+{
+    public %%custom-code-abstract-modifier%% class %%entity-name%%Manager%%custom-code-base%% : DomainService
+    {
+        public I%%entity-name%%Repository _%%entity-name-camelcase%%Repository;
+        %%nc-repository-definitions%%
+
+        public %%entity-name%%Manager%%custom-code-base%% (I%%entity-name%%Repository %%entity-name-camelcase%%Repository%%nc-repository-constructor-injections%%)
+        {
+            _%%entity-name-camelcase%%Repository = %%entity-name-camelcase%%Repository;%%nc-repository-constructor-values%%
+        }
+
+        public virtual async Task<%%entity-name%%> CreateAsync(
+        %%nc-method-parameters%%%%method-create-parameters%%)
+        {
+            %%validations-create%%
+            
+            var %%entity-name-camelcase%% = new %%entity-name%%(
+             %%<if:IsPrimaryTypeGuid>%%GuidGenerator.Create()%%<if:HasPropertyOrNp>%%,%%</if:HasPropertyOrNp>%%%%</if:IsPrimaryTypeGuid>%%
+             %%constructor-parameters%%
+             );
+
+            %%nc-method-calls%%
+
+            return await _%%entity-name-camelcase%%Repository.InsertAsync(%%entity-name-camelcase%%);
+        }
+
+        public virtual async Task<%%entity-name%%> UpdateAsync(
+            %%primary-key%% id%%update-method-parameter-comma%%
+            %%nc-method-parameters%%%%method-update-parameters%%%%<if:CheckConcurrency>%%, [CanBeNull] string? concurrencyStamp = null%%</if:CheckConcurrency>%%
+        )
+        {
+            %%validations-update%%
+            %%update-get-query%%
+
+            %%update-method-values%%
+
+            %%nc-method-calls%%
+            
+            %%<if:CheckConcurrency>%%%%entity-name-camelcase%%.SetConcurrencyStampIfNotNull(concurrencyStamp);%%</if:CheckConcurrency>%%
+            return await _%%entity-name-camelcase%%Repository.UpdateAsync(%%entity-name-camelcase%%);
+        }
+%%nc-methods%%
+    }
+}

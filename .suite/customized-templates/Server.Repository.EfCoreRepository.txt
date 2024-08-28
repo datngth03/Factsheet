@@ -1,0 +1,61 @@
+##F1DCF03B7B6BD0EB049879F77C3F0754##
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore;
+using %%solution-namespace%%.EntityFrameworkCore;
+
+namespace %%solution-namespace%%.%%entity-namespace%%
+{
+    public %%custom-code-abstract-modifier%% class EfCore%%entity-name%%Repository%%custom-code-base%% : EfCoreRepository<%%only-project-name%%DbContext, %%entity-name%%, %%primary-key%%>%%<if:PreserveCustomCodeNotEnabled>%%, I%%entity-name%%Repository%%</if:PreserveCustomCodeNotEnabled>%%
+    {
+        public EfCore%%entity-name%%Repository%%custom-code-base%%(IDbContextProvider<%%only-project-name%%DbContext> dbContextProvider)
+            : base(dbContextProvider)
+        {
+
+        }
+         
+        %%bulk-delete-all-method%%
+        
+        %%child-master-list-methods%%
+        
+        %%child-master-navigation-methods%%
+        
+        %%navigation-methods%%
+        public virtual async Task<List<%%entity-name%%>> GetListAsync(
+            string? filterText = null,
+%%dto-field-names-with-type%%%%<if:HasFilterableProperties>%%,%%</if:HasFilterableProperties>%%
+            string? sorting = null,
+            int maxResultCount = int.MaxValue,
+            int skipCount = 0,
+            CancellationToken cancellationToken = default)
+        {
+            var query = ApplyFilter((await GetQueryableAsync()), filterText%%<if:HasFilterableProperties>%%, %%</if:HasFilterableProperties>%%%%dto-field-names%%);
+            query = query.OrderBy(string.IsNullOrWhiteSpace(sorting) ? %%entity-name%%Consts.GetDefaultSorting(false) : sorting);
+            return await query.PageBy(skipCount, maxResultCount).ToListAsync(cancellationToken);
+        }
+
+        public virtual async Task<long> GetCountAsync(
+            string? filterText = null,
+%%dto-field-names-with-type-include-navigation-properties%%%%<if:HasAnyFilterableProperties>%%,%%</if:HasAnyFilterableProperties>%%
+            CancellationToken cancellationToken = default)
+        {
+            %%get-count-query%%
+            return await query.LongCountAsync(GetCancellationToken(cancellationToken));
+        }
+
+        protected virtual IQueryable<%%entity-name%%> ApplyFilter(
+            IQueryable<%%entity-name%%> query, 
+			string? filterText = null%%<if:HasFilterableProperties>%%,%%</if:HasFilterableProperties>%%
+%%dto-field-names-with-type%%)
+        {
+            return query
+					%%apply-filter-text%%%%filter-fields%%
+        }
+    }
+}

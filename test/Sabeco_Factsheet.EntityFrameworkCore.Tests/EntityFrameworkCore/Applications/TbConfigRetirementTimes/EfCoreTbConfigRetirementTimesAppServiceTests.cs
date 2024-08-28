@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbConfigRetirementTimes;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbConfigRetirementTimes;
+
+public class EfCoreTbConfigRetirementTimesAppServiceTests : TbConfigRetirementTimesAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

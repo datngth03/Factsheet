@@ -1,0 +1,34 @@
+##AF4B28561719FD21083A25E52321EC83##
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore;
+using %%solution-namespace%%.EntityFrameworkCore;
+
+namespace %%solution-namespace%%.%%entity-namespace%%
+{
+    public class EfCore%%entity-name%%Repository : EfCore%%entity-name%%RepositoryBase, I%%entity-name%%Repository
+    {
+        public EfCore%%entity-name%%Repository(IDbContextProvider<%%only-project-name%%DbContext> dbContextProvider)
+            : base(dbContextProvider)
+        {
+        }
+        //HQSOFT's generated code:
+        public virtual async Task<List<%%entity-name%%>> GetListNoPagedAsync(
+            string? filterText = null,
+%%dto-field-names-with-type%%%%<if:HasFilterableProperties>%%,%%</if:HasFilterableProperties>%%
+            string? sorting = null,
+            CancellationToken cancellationToken = default)
+        {
+            var query = ApplyFilter((await GetQueryableAsync()), filterText%%<if:HasFilterableProperties>%%, %%</if:HasFilterableProperties>%%%%dto-field-names%%);
+            query = query.OrderBy(string.IsNullOrWhiteSpace(sorting) ? %%entity-name%%Consts.GetDefaultSorting(false) : sorting);
+            return await query.ToListAsync(cancellationToken);
+        }
+        //Write your custom code here...
+    }
+}

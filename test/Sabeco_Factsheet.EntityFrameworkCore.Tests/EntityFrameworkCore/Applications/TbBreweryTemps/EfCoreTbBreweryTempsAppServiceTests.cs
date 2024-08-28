@@ -1,0 +1,8 @@
+using Sabeco_Factsheet.TbBreweryTemps;
+using Xunit;
+
+namespace Sabeco_Factsheet.EntityFrameworkCore.Applications.TbBreweryTemps;
+
+public class EfCoreTbBreweryTempsAppServiceTests : TbBreweryTempsAppServiceTests<Sabeco_FactsheetEntityFrameworkCoreTestModule>
+{
+}

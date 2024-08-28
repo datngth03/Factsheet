@@ -1,0 +1,64 @@
+﻿@attribute [Authorize(Sabeco_FactsheetPermissions.TbPersons.Default)]
+@using Sabeco_Factsheet.TbFileUploads
+@using Sabeco_Factsheet.TbFileUploadTemps
+@using Sabeco_Factsheet.TbUsers
+@using Sabeco_Factsheet.Localization
+@using Sabeco_Factsheet.Shared
+@using Sabeco_Factsheet.Permissions
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+
+@using Blazorise
+@using Blazorise.Snackbar
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using DevExpress.Blazor
+
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+
+@inherits Sabeco_FactsheetComponentBase
+
+@inject ITbUsersAppService TbUsersAppService
+@inject ITbFileUploadTempsAppService TbFileUploadTempsAppService
+@inject ITbFileUploadsAppService TbFileUploadsAppService
+@inject IPageProgressService PageProgressService
+
+@inject IJSRuntime JSRuntime
+@inject IUiMessageService _uiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject AbpBlazorMessageLocalizerHelper<Sabeco_FactsheetResource> LH
+@inject NavigationManager NavigationManager
+
+
+@if (fileName == null)
+{
+    <label for="fileupload"
+           class="load-files-label" style="border-color: #21367B;color: #21367B;
+    border: solid; border-width: 1px; border-radius: 10px;
+    cursor: pointer; display: block;
+    width: 10rem; min-height: 3rem; padding: 5px;
+    text-align: center;align-content: center;">@L["AttachmentsFile"] <i class="fa fa-upload"></i></label>
+
+
+    <InputFile id="fileupload" hidden OnChange="@HandleFileSelected" multiple />
+}
+else
+{
+    <Button Style="border-color: #21367B;color: #21367B;
+    border: solid; border-width: 1px; border-radius: 10px;
+    cursor: pointer; display: block; padding: 10px;
+    width: 10rem; min-height: 3rem; font-size: 14px; font-weight: 400;
+    text-align: center;align-content: center;" Clicked="() => DeleteFile(fileId)">
+        @TruncateText(fileName, 15) <Icon Name="IconName.Delete" />
+    </Button>
+
+} 

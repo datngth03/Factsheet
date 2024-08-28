@@ -1,0 +1,29 @@
+##23F5D60BDDE99A17D3DFDF7779E85C00##
+using Asp.Versioning;
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
+using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Application.Dtos;
+using System.Collections.Generic;
+using %%solution-namespace%%.%%entity-namespace%%;
+
+%%<if:IsTieredArchitecture>%%namespace %%solution-namespace%%.Controllers.%%entity-namespace%%%%</if:IsTieredArchitecture>%%%%<if:IsNonTieredArchitecture>%%namespace %%solution-namespace%%.%%entity-namespace%%%%</if:IsNonTieredArchitecture>%%
+{
+    %%controller-attributes%%
+    public class %%entity-name%%Controller : %%entity-name%%ControllerBase, I%%entity-name-plural%%AppService
+    {
+        public %%entity-name%%Controller(I%%entity-name-plural%%AppService %%entity-name-plural-camelcase%%AppService) : base(%%entity-name-plural-camelcase%%AppService)
+        {
+        }
+       //HQSOFT's generated code:
+        [HttpGet]
+        [Route("list-no-paged")]
+        public virtual Task<List<%%entity-name%%Dto>> GetListNoPagedAsync(Get%%entity-name-plural%%Input input)
+        {
+            return _%%entity-name-plural-camelcase%%AppService.GetListNoPagedAsync(input);
+        }
+        //Write your custom code here...
+    }
+}

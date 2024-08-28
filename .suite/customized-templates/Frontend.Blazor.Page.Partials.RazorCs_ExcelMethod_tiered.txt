@@ -1,0 +1,21 @@
+##6DAE4C0B529A6C5B7C3F8E2FBFEA7D95##
+
+
+        private async Task DownloadAsExcelAsync()
+        {
+		string code = "";
+		string currentDate = DateTime.Now.ToString("yyyyMMdd");
+		string currentTime = DateTime.Now.ToString("HHmm");
+
+		string fileName = code + currentDate + currentTime;
+
+            var token = (await %%entity-name-plural%%AppService.GetDownloadTokenAsync()).Token;
+            var remoteService = await RemoteServiceConfigurationProvider.GetConfigurationOrDefaultOrNullAsync("%%only-project-name%%") ?? await RemoteServiceConfigurationProvider.GetConfigurationOrDefaultOrNullAsync("Default");
+            var culture = CultureInfo.CurrentUICulture.Name ?? CultureInfo.CurrentCulture.Name;
+            if(!culture.IsNullOrEmpty())
+            {
+                culture = "&culture=" + culture;
+            }
+            await RemoteServiceConfigurationProvider.GetConfigurationOrDefaultOrNullAsync("Default");
+            NavigationManager.NavigateTo($"{remoteService?.BaseUrl.EnsureEndsWith('/') ?? string.Empty}api/%%controller-route-name%%/%%entity-name-plural-kebabcase%%/as-excel-file?DownloadToken={token}&FilterText={HttpUtility.UrlEncode(Filter.FilterText)}{culture}&FileName={fileName}%%advanced-filter-parameters%%", forceLoad: true);
+        }

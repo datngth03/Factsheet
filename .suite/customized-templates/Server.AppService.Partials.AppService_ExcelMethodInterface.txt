@@ -1,0 +1,4 @@
+##78D919F5F6BB28027CC516FBAE64705E##
+
+        Task<IRemoteStreamContent> GetListAsExcelFileAsync(%%entity-name%%ExcelDownloadDto input, string fileName);
+ 

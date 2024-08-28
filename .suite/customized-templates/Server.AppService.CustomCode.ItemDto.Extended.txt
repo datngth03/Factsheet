@@ -1,0 +1,9 @@
+##14865F71DA847F0503D5E76E9D2A9086##
+namespace %%solution-namespace%%%%<if:ApplicationContractsNotExists>%%%%.AppServices%%</if:ApplicationContractsNotExists>%%.%%entity-namespace%%
+{
+    public class %%entity-name%%Dto : %%entity-name%%DtoBase
+    {
+        //Write your custom code here...
+        public bool IsChanged { get; set; }
+    }
+}
